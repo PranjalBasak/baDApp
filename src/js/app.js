@@ -116,8 +116,10 @@ App = {
         const participantId = parseInt($("#bookParticipantId").val());
         const slotId = parseInt($("#bookSlotId").val());
         try {
-            await App.contract.methods.bookTrainingSlot(trainerId, participantId, slotId)
-                .send({ from: App.account, gas: 300000 });
+            const BOOKING_FEE = App.web3.utils.toWei("1", "ether"); // match the contract
+
+            await App.contract.methods.bookTrainingSlot(trainerId, slotId)
+                .send({ from: App.account, value: BOOKING_FEE, gas: 300000 });  
             alert("Training slot booked successfully!");
         } catch (err) { console.error(err); alert("Failed to book slot"); }
     },

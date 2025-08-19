@@ -8,6 +8,7 @@ contract DisasterRecoveryTraining {
         string name;
         uint256 age;
         uint256 balance;
+        address admin_address;
     }
     
     struct Trainer {
@@ -26,6 +27,7 @@ contract DisasterRecoveryTraining {
         TrainingType training_interest;
         bool has_completed_training;
         uint256 balance;
+        address account_address;
     }
     
     struct TrainingSlot {
@@ -41,6 +43,7 @@ contract DisasterRecoveryTraining {
 
     mapping(uint256 => Admin) private admins;
     mapping(address => bool) private isAdmin;
+    mapping(address => uint256) private participantByAddress;
     mapping(uint256 => Trainer) private trainers;
     mapping(uint256 => Participant) private participants;
     mapping(uint256 => mapping(uint256 => TrainingSlot)) private trainerSlots;
@@ -56,7 +59,7 @@ contract DisasterRecoveryTraining {
         require(id > 0, "Invalid ID");
         require(admins[id].id == 0, "Admin ID already exists");
         
-        admins[id] = Admin(id, name, age, 0);
+        admins[id] = Admin(id, name, age, 0, msg.sender);
         adminIds.push(id);
         isAdmin[msg.sender] = true;
         return id;
@@ -96,6 +99,9 @@ contract DisasterRecoveryTraining {
             INITIAL_PARTICIPANT_BALANCE,
             msg.sender
         );
+
+        participantByAddress[msg.sender] = id;
+
         return id;
     }
     
@@ -107,31 +113,48 @@ contract DisasterRecoveryTraining {
         require(!p.has_completed_training || has_completed_training, "Cannot change completed from true to false");
         
         // admin only access
-        require(isdAdmin[msg.sender], "Not Authorized");
+        require(isAdmin[msg.sender], "Not Authorized");
         p.training_interest = TrainingType(newTrainingInterest);
         p.has_completed_training = has_completed_training;
     }
     
-    function bookTrainingSlot(uint256 trainerId, uint256 participantId, uint256 slotId) external returns (bool) {
+    function bookTrainingSlot(uint256 trainerId, uint256 slotId) external payable returns (bool) {
         require(trainers[trainerId].id != 0, "Trainer not found");
-        require(participants[participantId].id != 0, "Participant not found");
-        require(participants[participantId].balance >= BOOKING_FEE, "Insufficient participant balance");
         require(adminIds.length > 0, "No admins available");
         require(slotId < TOTAL_SLOTS_PER_DAY, "Invalid slot ID");
         require(!trainerSlots[trainerId][slotId].isBooked, "Slot is already booked");
+        require(adminIds.length > 0, "No admins available");
+        require(msg.value == BOOKING_FEE, "Send exact booking fee");
 
+
+        //
+
+        // Book the slot
+        uint256 participantId = participantByAddress[msg.sender];
+        require(participantId != 0, "Participant not registered");
         trainerSlots[trainerId][slotId] = TrainingSlot(slotId, trainerId, participantId, true);
+
 
         uint256 randomIndex = uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, participantId))) % adminIds.length;
 
         uint256 selectedAdminId = adminIds[randomIndex];
-
-        participants[participantId].balance -= BOOKING_FEE;
-        admins[selectedAdminId].balance += BOOKING_FEE;
+        payable(admins[selectedAdminId].admin_address).transfer(msg.value);
+        // participants[participantId].balance -= BOOKING_FEE;
+        // admins[selectedAdminId].balance += BOOKING_FEE;
         
         return true;
     }
+
+    //     function findParticipantByAddress(address addr) internal view returns (uint256) {
+    //     for (uint256 i = 1; i <= 100; i++) { // adjust max range
+    //         if (participants[i].id != 0 && participants[i].account_address == addr) {
+    //             return participants[i].id;
+    //         }
+    //     }
+    //     return 0;
+    // }
     
+    /*
     function viewAdminBalance() external view returns (uint256[] memory adminIdList, uint256[] memory balanceList) {
         uint256 totalAdmins = adminIds.length;
         
@@ -146,6 +169,7 @@ contract DisasterRecoveryTraining {
         
         return (adminIdList, balanceList);
     }
+    */
     
     function viewParticipantData(uint256 participantId) external view returns (
         uint256 id,
