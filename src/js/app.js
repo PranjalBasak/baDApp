@@ -27,8 +27,10 @@ App = {
         }
         const artifact = await artifactResponse.json();
 
-        App.web3 = new Web3(Web3.givenProvider || window.ethereum);
-        const networkId = await App.web3.eth.getChainId();
+        // App.web3 = new Web3(Web3.givenProvider || window.ethereum);
+        // const networkId = await App.web3.eth.getChainId();
+        const networkId = await App.web3.eth.net.getId();
+        // const networkId = 5777;
         const deployed = artifact.networks && artifact.networks[networkId];
         if (!deployed || !deployed.address) {
             throw new Error(`Contract not deployed on network ${networkId}. Run 'truffle migrate' on this network.`);
@@ -45,7 +47,7 @@ App = {
         const age = parseInt($("#adminAge").val());
         try {
             await App.contract.methods.registerAdmin(id, name, age)
-                .send({ from: App.account });
+                .send({ from: App.account, gas: 90000 });
             alert("Admin registered!");
         } catch (err) { console.error(err); alert("Failed to register admin"); }
     },
