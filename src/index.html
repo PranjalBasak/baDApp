@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Disaster Recovery Training DApp</title>
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container" style="max-width: 900px; margin-top: 20px;">
+  <h1 class="text-center">Disaster Recovery Training DApp</h1>
+  <hr>
+
+  <div class="mb-3">
+    <button id="connectWallet" class="btn btn-primary btn-block">Connect Wallet</button>
+    <p id="accountAddress" class="text-center mt-2"></p>
+  </div>
+
+  <hr>
+  <h3>Admin Registration</h3>
+  <div class="form-inline mb-2">
+    <input id="adminId" class="form-control mr-1" placeholder="ID" type="number">
+    <input id="adminName" class="form-control mr-1" placeholder="Name">
+    <input id="adminAge" class="form-control mr-1" placeholder="Age" type="number">
+    <button id="registerAdminBtn" class="btn btn-success">Register Admin</button>
+  </div>
+
+  <hr>
+  <h3>Trainer Registration</h3>
+  <div class="form-inline mb-2">
+    <input id="trainerId" class="form-control mr-1" placeholder="ID" type="number">
+    <input id="trainerName" class="form-control mr-1" placeholder="Name">
+    <input id="trainerAge" class="form-control mr-1" placeholder="Age" type="number">
+    <input id="trainerGender" class="form-control mr-1" placeholder="Gender">
+    <button id="registerTrainerBtn" class="btn btn-success">Register Trainer</button>
+  </div>
+
+  <h3>View Trainer Schedule</h3>
+  <div class="form-inline mb-2">
+    <input id="viewTrainerId" class="form-control mr-1" placeholder="Trainer ID" type="number">
+    <button id="viewTrainerScheduleBtn" class="btn btn-info">View Schedule</button>
+  </div>
+  <table class="table table-striped" id="trainerSchedule">
+    <thead><tr><th>Slot ID</th><th>Time Range</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <hr>
+  <h3>Participant Registration</h3>
+  <div class="form-inline mb-2">
+    <input id="participantId" class="form-control mr-1" placeholder="ID" type="number">
+    <input id="participantName" class="form-control mr-1" placeholder="Name">
+    <input id="participantAge" class="form-control mr-1" placeholder="Age" type="number">
+    <input id="participantGender" class="form-control mr-1" placeholder="Gender">
+    <input id="participantDistrict" class="form-control mr-1" placeholder="District">
+    <select id="participantTrainingInterest" class="form-control mr-1">
+      <option value="0">First Aid</option>
+      <option value="1">Shelter Rebuild</option>
+      <option value="2">Food Safety</option>
+    </select>
+    <button id="registerParticipantBtn" class="btn btn-success">Register Participant</button>
+  </div>
+
+  <h3>View Participant Info</h3>
+  <div class="form-inline mb-2">
+    <input id="viewParticipantId" class="form-control mr-1" placeholder="Participant ID" type="number">
+    <button id="viewParticipantBtn" class="btn btn-info">View Info</button>
+  </div>
+  <table class="table table-striped" id="participantInfo">
+    <thead><tr><th>Field</th><th>Value</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <h3>Book Training Slot</h3>
+  <div class="form-inline mb-2">
+    <input id="bookTrainerId" class="form-control mr-1" placeholder="Trainer ID" type="number">
+    <input id="bookParticipantId" class="form-control mr-1" placeholder="Participant ID" type="number">
+    <input id="bookSlotId" class="form-control mr-1" placeholder="Slot ID" type="number">
+    <button id="bookSlotBtn" class="btn btn-warning">Book Slot</button>
+  </div>
+
+  <h3>Search Participants by District</h3>
+  <div class="form-inline mb-2">
+    <input id="districtInput" class="form-control mr-1" placeholder="District">
+    <button id="searchBtn" class="btn btn-primary">Search</button>
+  </div>
+  <p id="totalCount" class="text-center mt-2"></p>
+  <table class="table table-striped" id="participantsTable">
+    <thead><tr><th>ID</th><th>Name</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <h3>View Admin Balances</h3>
+  <button id="viewAdminBalancesBtn" class="btn btn-info mb-2">View Admin Balances</button>
+  <table class="table table-striped" id="adminBalances">
+    <thead><tr><th>Admin ID</th><th>Balance (ETH)</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/web3.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
+
