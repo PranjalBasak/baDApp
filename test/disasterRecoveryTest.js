@@ -11,6 +11,8 @@ contract("DisasterRecoveryTraining", (accounts) => {
     // Register admins
     await instance.registerAdmin(1, "Admin1", 35, { from: accounts[0] });
     await instance.registerAdmin(2, "Admin2", 40, { from: accounts[1] });
+    console.log("accounts[0]:", accounts[0]);
+    console.log("accounts[1]:", accounts[1]);
 
     // Register trainers
     await instance.registerTrainer(1, "Trainer1", 40, "Male", { from: accounts[0] });

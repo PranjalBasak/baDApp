@@ -62,6 +62,22 @@
     <button id="registerParticipantBtn" class="btn btn-success">Register Participant</button>
   </div>
 
+  <h3>Update Participant Data (Admin Only)</h3>
+  <div class="form-inline mb-2">
+    <input id="updateParticipantId" class="form-control mr-1" placeholder="Participant ID" type="number">
+    <select id="updateTrainingInterest" class="form-control mr-1">
+      <option value="0">First Aid</option>
+      <option value="1">Shelter Rebuild</option>
+      <option value="2">Food Safety</option>
+    </select>
+    <select id="updateHasCompleted" class="form-control mr-1">
+      <option value="false">Not Completed</option>
+      <option value="true">Completed</option>
+    </select>
+    <button id="updateParticipantBtn" class="btn btn-danger">Update Participant</button>
+  </div>
+  <p id="updateStatus" class="text-center mt-2"></p>
+
   <h3>View Participant Info</h3>
   <div class="form-inline mb-2">
     <input id="viewParticipantId" class="form-control mr-1" placeholder="Participant ID" type="number">
