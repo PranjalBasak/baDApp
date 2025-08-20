@@ -154,22 +154,24 @@ contract DisasterRecoveryTraining {
     //     return 0;
     // }
     
-    /*
-    function viewAdminBalance() external view returns (uint256[] memory adminIdList, uint256[] memory balanceList) {
+    function viewAdminBalance() external view returns (
+        uint256[] memory adminIdList,
+        uint256[] memory balanceList
+    ) {
         uint256 totalAdmins = adminIds.length;
-        
+
         adminIdList = new uint256[](totalAdmins);
         balanceList = new uint256[](totalAdmins);
-        
+
         for (uint256 i = 0; i < totalAdmins; i++) {
             uint256 adminId = adminIds[i];
             adminIdList[i] = adminId;
-            balanceList[i] = admins[adminId].balance / 1 ether;
+            // Return balances in whole ETH units for display, based on actual address balance
+            balanceList[i] = admins[adminId].admin_address.balance / 1 ether;
         }
-        
+
         return (adminIdList, balanceList);
     }
-    */
     
     function viewParticipantData(uint256 participantId) external view returns (
         uint256 id,

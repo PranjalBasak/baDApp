@@ -20,22 +20,20 @@ App = {
     },
 
     compileAndLoadContract: async function() {
-        // Load deployed artifact instead of compiling/deploying in-browser
-        const artifactResponse = await fetch("DisasterRecoveryTraining.json");
+        // Load deployed artifact with cache-busting to avoid stale ABI/addresses
+        const artifactResponse = await fetch(`DisasterRecoveryTraining.json?t=${Date.now()}`, { cache: "no-store" });
         if (!artifactResponse.ok) {
             throw new Error("Artifact not found. Did you run truffle migrate and start the dev server?");
         }
         const artifact = await artifactResponse.json();
 
-        // App.web3 = new Web3(Web3.givenProvider || window.ethereum);
-        // const networkId = await App.web3.eth.getChainId();
         const networkId = await App.web3.eth.net.getId();
-        // const networkId = 5777;
         const deployed = artifact.networks && artifact.networks[networkId];
         if (!deployed || !deployed.address) {
             throw new Error(`Contract not deployed on network ${networkId}. Run 'truffle migrate' on this network.`);
         }
 
+        // Create contract instance with Web3 v4 syntax
         App.contract = new App.web3.eth.Contract(artifact.abi, deployed.address);
         App.contractAddress = deployed.address;
         $("#accountAddress").html(`Connected account: ${App.account}<br/>Contract: ${App.contractAddress}`);
@@ -45,11 +43,32 @@ App = {
         const id = parseInt($("#adminId").val());
         const name = $("#adminName").val();
         const age = parseInt($("#adminAge").val());
+        
+        if (!id || !name || !age) {
+            alert("Please fill in all fields");
+            return;
+        }
+        
         try {
-            await App.contract.methods.registerAdmin(id, name, age)
-                .send({ from: App.account, gas: 90000 });
-            alert("Admin registered!");
-        } catch (err) { console.error(err); alert("Failed to register admin"); }
+            console.log("Registering admin with:", { id, name, age, account: App.account });
+            
+            const result = await App.contract.methods.registerAdmin(id, name, age)
+                .send({ 
+                    from: App.account, 
+                    gas: 200000 // Fixed gas limit
+                });
+            console.log("Transaction result:", result);
+            alert("Admin registered successfully!");
+        } catch (err) { 
+            console.error("Registration error:", err); 
+            let errorMsg = "Failed to register admin";
+            if (err.message) {
+                errorMsg += ": " + err.message;
+            } else if (err.toString) {
+                errorMsg += ": " + err.toString();
+            }
+            alert(errorMsg); 
+        }
     },
 
     registerTrainer: async function() {
@@ -57,11 +76,32 @@ App = {
         const name = $("#trainerName").val();
         const age = parseInt($("#trainerAge").val());
         const gender = $("#trainerGender").val();
+        
+        if (!id || !name || !age || !gender) {
+            alert("Please fill in all fields");
+            return;
+        }
+        
         try {
-            await App.contract.methods.registerTrainer(id, name, age, gender)
-                .send({ from: App.account });
-            alert("Trainer registered!");
-        } catch (err) { console.error(err); alert("Failed to register"); }
+            console.log("Registering trainer with:", { id, name, age, gender, account: App.account });
+            
+            const result = await App.contract.methods.registerTrainer(id, name, age, gender)
+                .send({ 
+                    from: App.account, 
+                    gas: 200000 // Fixed gas limit
+                });
+            console.log("Transaction result:", result);
+            alert("Trainer registered successfully!");
+        } catch (err) { 
+            console.error("Registration error:", err); 
+            let errorMsg = "Failed to register trainer";
+            if (err.message) {
+                errorMsg += ": " + err.message;
+            } else if (err.toString) {
+                errorMsg += ": " + err.toString();
+            }
+            alert(errorMsg); 
+        }
     },
 
     viewTrainerSchedule: async function() {
@@ -81,12 +121,33 @@ App = {
         const gender = $("#participantGender").val();
         const district = $("#participantDistrict").val();
         const training_interest = parseInt($("#participantTrainingInterest").val());
+        
+        if (!id || !name || !age || !gender || !district) {
+            alert("Please fill in all fields");
+            return;
+        }
+        
         try {
-            await App.contract.methods.registerParticipant(
+            console.log("Registering participant with:", { id, name, age, gender, district, training_interest, account: App.account });
+            
+            const result = await App.contract.methods.registerParticipant(
                 id, name, age, gender, district, training_interest, false
-            ).send({ from: App.account });
-            alert("Participant registered!");
-        } catch (err) { console.error(err); alert("Failed to register"); }
+            ).send({ 
+                from: App.account, 
+                gas: 300000 // Fixed gas limit for participant registration
+            });
+            console.log("Transaction result:", result);
+            alert("Participant registered successfully!");
+        } catch (err) { 
+            console.error("Registration error:", err); 
+            let errorMsg = "Failed to register participant";
+            if (err.message) {
+                errorMsg += ": " + err.message;
+            } else if (err.toString) {
+                errorMsg += ": " + err.toString();
+            }
+            alert(errorMsg); 
+        }
     },
 
     viewParticipant: async function() {
@@ -131,10 +192,23 @@ App = {
             const result = await App.contract.methods.viewAdminBalance().call();
             const tbody = $("#adminBalances tbody");
             tbody.empty();
-            for (let i=0; i<result.adminIdList.length; i++) {
-                tbody.append(`<tr><td>${result.adminIdList[i]}</td><td>${result.balanceList[i]}</td></tr>`);
+
+            // Support both named and indexed return shapes from web3
+            const adminIds = result.adminIdList || result[0] || [];
+            const balances = result.balanceList || result[1] || [];
+
+            if (!adminIds.length) {
+                tbody.append(`<tr><td colspan="2">No admins registered yet</td></tr>`);
+                return;
             }
-        } catch(err){ console.error(err); alert("No admin balances found"); }
+
+            for (let i = 0; i < adminIds.length; i++) {
+                tbody.append(`<tr><td>${adminIds[i]}</td><td>${balances[i]}</td></tr>`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Failed to load admin balances. Hard refresh the page and try again.");
+        }
     }
 };
 
