@@ -51,7 +51,8 @@ module.exports = async function (deployer, network, accounts) {
       { from: accounts[0] }
     );
     console.log(`Participant registered: ID=${participantId}, Name=${participantName}, District=${participantDistrict}`);
-
+    
+    console.log(`Used Address: ${accounts[0]}`);
     console.log("\n✅ DisasterRecoveryTraining deployment and initialization completed.\n");
 
   } catch (error) {

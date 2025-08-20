@@ -55,6 +55,7 @@ contract DisasterRecoveryTraining {
     }
     
     function registerAdmin(uint256 id, string memory name, uint256 age) external returns (uint256) {
+        require(!isAdmin[msg.sender], "Address already registered as admin");
         require(age > 0, "Invalid age");
         require(id > 0, "Invalid ID");
         require(admins[id].id == 0, "Admin ID already exists");
