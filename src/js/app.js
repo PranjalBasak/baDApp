@@ -39,7 +39,26 @@ App = {
         console.log("artifact.abi", artifact.abi);
         console.log("deployed.address", deployed.address);
         App.contractAddress = deployed.address;
-        $("#accountAddress").html(`Connected account: ${App.account}<br/>Contract: ${App.contractAddress}`);
+        
+        // Verify contract has required functions
+        console.log("Verifying contract ABI...");
+        const requiredMethods = ['getParticipantIdByAddress', 'bookTrainingSlot', 'registerAdmin', 'registerParticipant', 'registerTrainer'];
+        const missingMethods = [];
+        
+        for (const method of requiredMethods) {
+            if (!App.contract.methods[method]) {
+                missingMethods.push(method);
+            }
+        }
+        
+        if (missingMethods.length > 0) {
+            console.error("Missing methods in ABI:", missingMethods);
+            $("#accountAddress").html(`❌ Contract ABI outdated! Missing: ${missingMethods.join(', ')}<br/>Please run 'truffle migrate --reset'`);
+            return;
+        }
+        
+        console.log("✅ Contract ABI verification passed");
+        $("#accountAddress").html(`Connected account: ${App.account}<br/>Contract: ${App.contractAddress}<br/>✅ ABI up-to-date`);
     },
 
     registerAdmin: async function() {
@@ -256,15 +275,48 @@ App = {
 
     bookTrainingSlot: async function() {
         const trainerId = parseInt($("#bookTrainerId").val());
-        const participantId = parseInt($("#bookParticipantId").val());
         const slotId = parseInt($("#bookSlotId").val());
+        
+        if (!trainerId || !slotId) {
+            alert("Please fill in trainer ID and slot ID");
+            return;
+        }
+        
         try {
-            const BOOKING_FEE = App.web3.utils.toWei("1", "ether"); // match the contract
-
+            console.log("=== BOOKING SLOT ===");
+            console.log("Trainer ID:", trainerId);
+            console.log("Slot ID:", slotId);
+            console.log("Account:", App.account);
+            
+            // Use exact booking fee: 1 ether in wei
+            const BOOKING_FEE = "1000000000000000000";
+            console.log("Booking fee:", BOOKING_FEE, "wei");
+            
+            // Check account balance (only client-side check needed)
+            const balance = await App.web3.eth.getBalance(App.account);
+            console.log("Account balance in ETH:", App.web3.utils.fromWei(balance, 'ether'));
+            
+            if (BigInt(balance) < BigInt(BOOKING_FEE)) {
+                alert("❌ Insufficient balance! You need at least 1 ETH to book a slot.");
+                return;
+            }
+            
+            // Simulate first to get proper error messages
             await App.contract.methods.bookTrainingSlot(trainerId, slotId)
-                .send({ from: App.account, value: BOOKING_FEE, gas: 300000 });  
-            alert("Training slot booked successfully!");
-        } catch (err) { console.error(err); alert("Failed to book slot: Slot Already Taken"); }
+                .call({ from: App.account, value: BOOKING_FEE });
+            
+            // Only send if simulation succeeds
+            console.log("Simulation successful, sending transaction...");
+            const result = await App.contract.methods.bookTrainingSlot(trainerId, slotId)
+                .send({ from: App.account, value: BOOKING_FEE, gas: 400000 });
+            
+            console.log("Transaction successful:", result);
+            alert("✅ Training slot booked successfully!");
+            
+        } catch (err) {
+            console.error("Simulation failed:", err.message);
+            alert("❌ Cannot book slot: " + err.message);
+        }
     },
 
     viewAdminBalances: async function() {
