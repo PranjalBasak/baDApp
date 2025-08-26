@@ -127,6 +127,8 @@ App = {
         try {
             console.log("Registering trainer with:", { id, name, age, gender, account: App.account });
             
+            const gasEstimate = await App.contract.methods.registerTrainer(id, name, age, gender)
+            .estimateGas({ from: App.account });
             const result = await App.contract.methods.registerTrainer(id, name, age, gender)
                 .send({ 
                     from: App.account, 
@@ -134,15 +136,32 @@ App = {
                 });
             console.log("Transaction result:", result);
             alert("Trainer registered successfully!");
-        } catch (err) { 
-            console.error("Registration error:", err); 
-            let errorMsg = "Failed to register trainer";
-            if (err.message) {
-                errorMsg += ": " + err.message;
-            } else if (err.toString) {
-                errorMsg += ": " + err.toString();
+        } catch (err) {
+            console.error("Transaction failed:", err);
+
+            // Extract human-readable revert reason if present
+            let reason = null;
+            if (err.data) {
+                // MetaMask / Ganache / Web3 v1+ format
+                const errorData = Object.values(err.data)[0];
+                if (errorData && errorData.reason) {
+                    reason = errorData.reason;
+                }
+            } else if (err.message && err.message.includes("revert")) {
+                // Fallback for other revert formats
+                const match = err.message.match(/revert (.*)/);
+                if (match && match[1]) reason = match[1];
             }
-            alert(errorMsg); 
+
+            if (err.code === 4001) {
+                alert("Transaction rejected by user in MetaMask");
+            } else if (reason) {
+                alert("Contract rejected transaction: " + reason);
+            } else if (err.message.includes("gas")) {
+                alert("Gas error: " + err.message);
+            } else {
+                alert("Transaction failed: " + (err.message || err.toString()));
+            }
         }
     },
 
@@ -354,7 +373,12 @@ App = {
     }
 
     try {
-        $("#updateParticipantBtn").prop("disabled", true);
+        // $("#updateParticipantBtn").prop("disabled", true);
+        const  gasEstimate = await App.contract.methods.updateParticipantData(
+            participantId,
+            trainingInterest,
+            hasCompleted
+        ).estimateGas({ from: App.account });
         const result = await App.contract.methods.updateParticipantData(
             participantId,
             trainingInterest,
@@ -364,13 +388,31 @@ App = {
         console.log("Update result:", result);
         $("#updateStatus").text("Participant updated successfully!").css("color", "green");
     } catch (err) {
-        console.error("Update error:", err);
-        let errorMsg = "Failed to update participant";
-        if (err?.data?.message) errorMsg += ": " + err.data.message;
-        else if (err?.message) errorMsg += ": " + err.message;
-        $("#updateStatus").text(errorMsg).css("color", "red");
-    } finally {
-        $("#updateParticipantBtn").prop("disabled", false);
+        console.error("Transaction failed:", err);
+
+        // Extract human-readable revert reason if present
+        let reason = null;
+        if (err.data) {
+            // MetaMask / Ganache / Web3 v1+ format
+            const errorData = Object.values(err.data)[0];
+            if (errorData && errorData.reason) {
+                reason = errorData.reason;
+            }
+        } else if (err.message && err.message.includes("revert")) {
+            // Fallback for other revert formats
+            const match = err.message.match(/revert (.*)/);
+            if (match && match[1]) reason = match[1];
+        }
+
+        if (err.code === 4001) {
+            alert("Transaction rejected by user in MetaMask");
+        } else if (reason) {
+            alert("Contract rejected transaction: " + reason);
+        } else if (err.message.includes("gas")) {
+            alert("Gas error: " + err.message);
+        } else {
+            alert("Transaction failed: " + (err.message || err.toString()));
+        }
     }
 
 
