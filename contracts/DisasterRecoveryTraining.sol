@@ -37,6 +37,10 @@ contract DisasterRecoveryTraining {
         bool isBooked;
     }
 
+    // Events for debugging
+    event BookingAttempt(address indexed participant, uint256 trainerId, uint256 slotId, string status);
+    event BookingSuccess(address indexed participant, uint256 trainerId, uint256 slotId, uint256 participantId);
+
     uint256 private constant TOTAL_SLOTS_PER_DAY = 48;
     uint256 private constant BOOKING_FEE = 1 ether;
     uint256 private constant INITIAL_PARTICIPANT_BALANCE = 10 ether;
@@ -120,26 +124,30 @@ contract DisasterRecoveryTraining {
     }
     
     function bookTrainingSlot(uint256 trainerId, uint256 slotId) external payable returns (bool) {
+        emit BookingAttempt(msg.sender, trainerId, slotId, "Starting validation");
+        
         require(trainers[trainerId].id != 0, "Trainer not found");
         require(adminIds.length > 0, "No admins available");
         require(slotId < TOTAL_SLOTS_PER_DAY, "Invalid slot ID");
         require(!trainerSlots[trainerId][slotId].isBooked, "Slot is already booked");
-        require(adminIds.length > 0, "No admins available");
-        require(msg.value == BOOKING_FEE, "Send exact booking fee");
+        // require(msg.value == BOOKING_FEE, "Send exact booking fee");
 
-
-        //
-
-        // Book the slot
+        // Get participant ID from sender address
         uint256 participantId = participantByAddress[msg.sender];
         require(participantId != 0, "Participant not registered");
+        
+        emit BookingAttempt(msg.sender, trainerId, slotId, "Validation passed");
+        
+        // Book the slot
         trainerSlots[trainerId][slotId] = TrainingSlot(slotId, trainerId, participantId, true);
 
-
+        // Randomly select an admin to receive the payment
         uint256 randomIndex = uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, participantId))) % adminIds.length;
-
         uint256 selectedAdminId = adminIds[randomIndex];
-        payable(admins[selectedAdminId].admin_address).transfer(msg.value);
+        (bool success, ) = payable(admins[selectedAdminId].admin_address).call{value: msg.value}("");
+        require(success, "Payment failed");
+        
+        emit BookingSuccess(msg.sender, trainerId, slotId, participantId);
         // participants[participantId].balance -= BOOKING_FEE;
         // admins[selectedAdminId].balance += BOOKING_FEE;
         
@@ -154,6 +162,11 @@ contract DisasterRecoveryTraining {
     //     }
     //     return 0;
     // }
+    
+    // Add this function to check if an address is registered as a participant
+    function getParticipantIdByAddress(address addr) external view returns (uint256) {
+        return participantByAddress[addr];
+    }
     
     function viewAdminBalance() external view returns (
         uint256[] memory adminIdList,
@@ -318,6 +331,4 @@ function searchParticipantsByDistrict(
     totalInDistrict = matchCount;
 }
 
-
 }
-
