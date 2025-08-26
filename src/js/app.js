@@ -20,7 +20,7 @@ App = {
     },
 
     compileAndLoadContract: async function() {
-        // Load deployed artifact with cache-busting to avoid stale ABI/addresses
+        
         const artifactResponse = await fetch(`DisasterRecoveryTraining.json?t=${Date.now()}`, { cache: "no-store" });
         if (!artifactResponse.ok) {
             throw new Error("Artifact not found. Did you run truffle migrate and start the dev server?");
@@ -34,13 +34,13 @@ App = {
             throw new Error(`Contract not deployed on network ${networkId}. Run 'truffle migrate' on this network.`);
         }
 
-        // Create contract instance with Web3 v4 syntax
+        
         App.contract = new App.web3.eth.Contract(artifact.abi, deployed.address);
         console.log("artifact.abi", artifact.abi);
         console.log("deployed.address", deployed.address);
         App.contractAddress = deployed.address;
         
-        // Verify contract has required functions
+        
         console.log("Verifying contract ABI...");
         const requiredMethods = ['getParticipantIdByAddress', 'bookTrainingSlot', 'registerAdmin', 'registerParticipant', 'registerTrainer'];
         const missingMethods = [];
@@ -53,12 +53,12 @@ App = {
         
         if (missingMethods.length > 0) {
             console.error("Missing methods in ABI:", missingMethods);
-            $("#accountAddress").html(`❌ Contract ABI outdated! Missing: ${missingMethods.join(', ')}<br/>Please run 'truffle migrate --reset'`);
+            $("#accountAddress").html(` Contract ABI outdated! Missing: ${missingMethods.join(', ')}<br/>Please run 'truffle migrate --reset'`);
             return;
         }
         
-        console.log("✅ Contract ABI verification passed");
-        $("#accountAddress").html(`Connected account: ${App.account}<br/>Contract: ${App.contractAddress}<br/>✅ ABI up-to-date`);
+        console.log("Contract ABI verification passed");
+        $("#accountAddress").html(`Connected account: ${App.account}<br/>Contract: ${App.contractAddress}<br/>ABI up-to-date`);
     },
 
     registerAdmin: async function() {
@@ -85,16 +85,16 @@ App = {
     } catch (err) {
         console.error("Transaction failed:", err);
 
-        // Extract human-readable revert reason if present
+        
         let reason = null;
         if (err.data) {
-            // MetaMask / Ganache / Web3 v1+ format
+            
             const errorData = Object.values(err.data)[0];
             if (errorData && errorData.reason) {
                 reason = errorData.reason;
             }
         } else if (err.message && err.message.includes("revert")) {
-            // Fallback for other revert formats
+            
             const match = err.message.match(/revert (.*)/);
             if (match && match[1]) reason = match[1];
         }
@@ -132,23 +132,23 @@ App = {
             const result = await App.contract.methods.registerTrainer(id, name, age, gender)
                 .send({ 
                     from: App.account, 
-                    gas: 200000 // Fixed gas limit
+                    gas: 200000 
                 });
             console.log("Transaction result:", result);
             alert("Trainer registered successfully!");
         } catch (err) {
             console.error("Transaction failed:", err);
 
-            // Extract human-readable revert reason if present
+            
             let reason = null;
             if (err.data) {
-                // MetaMask / Ganache / Web3 v1+ format
+                
                 const errorData = Object.values(err.data)[0];
                 if (errorData && errorData.reason) {
                     reason = errorData.reason;
                 }
             } else if (err.message && err.message.includes("revert")) {
-                // Fallback for other revert formats
+                
                 const match = err.message.match(/revert (.*)/);
                 if (match && match[1]) reason = match[1];
             }
@@ -167,13 +167,31 @@ App = {
 
     viewTrainerSchedule: async function() {
         const trainerId = parseInt($("#viewTrainerId").val());
-        const result = await App.contract.methods.viewTrainerSchedule(trainerId).call();
         const tbody = $("#trainerSchedule tbody");
         tbody.empty();
-        result.availableSlots.forEach((slot, i) => {
-            tbody.append(`<tr><td>${slot}</td><td>${result.timeRanges[i]}</td></tr>`);
-        });
+
+        try {
+            const result = await App.contract.methods.viewTrainerSchedule(trainerId).call();
+
+            
+            const availableSlots = result.availableSlots || result[0] || [];
+            const timeRanges = result.timeRanges || result[1] || [];
+
+            if (!availableSlots || availableSlots.length === 0) {
+                tbody.append(`<tr><td colspan="2">No trainer available with this id</td></tr>`);
+                return;
+            }
+
+            availableSlots.forEach((slot, i) => {
+                tbody.append(`<tr><td>${slot}</td><td>${timeRanges[i]}</td></tr>`);
+            });
+
+        } catch (err) {
+            console.error(err);
+            tbody.append(`<tr><td colspan="2">No trainer available with this id</td></tr>`);
+        }
     },
+
 
     registerParticipant: async function() {
         const id = parseInt($("#participantId").val());
@@ -181,9 +199,10 @@ App = {
         const age = parseInt($("#participantAge").val());
         const gender = $("#participantGender").val().trim();
         const district = $("#participantDistrict").val().trim();
+        const hasCompletedTraining = $("#hasCompletedTraining").val() === "true"
         const training_interest = parseInt($("#participantTrainingInterest").val());
 
-        // ✅ Basic validations
+        
         if (!id || !name || !age || !gender || !district || isNaN(training_interest)) {
             alert("Please fill in all fields correctly.");
             return;
@@ -198,17 +217,17 @@ App = {
         }
 
         try {
-            // ✅ Check if this address already has a participant ID
-            // const existingId = await App.contract.methods.participantByAddress(App.account).call();
-            // if (existingId != 0) {
-            //     alert("This account is already registered as a participant.");
-            //     return;
-            // }
+            
+            
+            
+            
+            
+            
 
             console.log("Registering participant:", { id, name, age, gender, district, training_interest, account: App.account });
 
-            // ✅ Disable button while transaction is pending
-            // $("#registerParticipantBtn").prop("disabled", true);
+            
+            
 
             const gasEstimate = await App.contract.methods.registerParticipant(
                 id, name, age, gender, district, training_interest, false
@@ -226,16 +245,16 @@ App = {
         } catch (err) {
         console.error("Transaction failed:", err);
 
-        // Extract human-readable revert reason if present
+        
         let reason = null;
         if (err.data) {
-            // MetaMask / Ganache / Web3 v1+ format
+            
             const errorData = Object.values(err.data)[0];
             if (errorData && errorData.reason) {
                 reason = errorData.reason;
             }
         } else if (err.message && err.message.includes("revert")) {
-            // Fallback for other revert formats
+            
             const match = err.message.match(/revert (.*)/);
             if (match && match[1]) reason = match[1];
         }
@@ -255,7 +274,7 @@ App = {
 
     viewParticipant: async function() { 
         const id = parseInt($("#viewParticipantId").val());
-        const trainingTypeMap = ["First Aid", "Shelter Rebuild", "Food Safety"]; // map enum values
+        const trainingTypeMap = ["First Aid", "Shelter Rebuild", "Food Safety"]; 
         try {
             const result = await App.contract.methods.viewParticipantData(id).call();
             const tbody = $("#participantInfo tbody");
@@ -264,9 +283,9 @@ App = {
             const fields = ["ID","Name","Age","Gender","District","Training Interest","Completed","Balance"];
             fields.forEach((f,i) => {
                 let value = result[i];
-                // convert enum uint to string
+                
                 if(f === "Training Interest") value = trainingTypeMap[value];
-                // convert boolean Completed to Yes/No
+                
                 if(f === "Completed") value = value ? "Yes" : "No";
                 if(f === "Balance") value = App.web3.utils.fromWei(value, 'ether') + " ETH";
 
@@ -307,34 +326,34 @@ App = {
             console.log("Slot ID:", slotId);
             console.log("Account:", App.account);
             
-            // Use exact booking fee: 1 ether in wei
+            
             const BOOKING_FEE = "1000000000000000000";
             console.log("Booking fee:", BOOKING_FEE, "wei");
             
-            // Check account balance (only client-side check needed)
+            
             const balance = await App.web3.eth.getBalance(App.account);
             console.log("Account balance in ETH:", App.web3.utils.fromWei(balance, 'ether'));
             
             if (BigInt(balance) < BigInt(BOOKING_FEE)) {
-                alert("❌ Insufficient balance! You need at least 1 ETH to book a slot.");
+                alert(" Insufficient balance! You need at least 1 ETH to book a slot.");
                 return;
             }
             
-            // Simulate first to get proper error messages
+            
             await App.contract.methods.bookTrainingSlot(trainerId, slotId)
                 .call({ from: App.account, value: BOOKING_FEE });
             
-            // Only send if simulation succeeds
+            
             console.log("Simulation successful, sending transaction...");
             const result = await App.contract.methods.bookTrainingSlot(trainerId, slotId)
                 .send({ from: App.account, value: BOOKING_FEE, gas: 400000 });
             
             console.log("Transaction successful:", result);
-            alert("✅ Training slot booked successfully!");
+            alert("Training slot booked successfully!");
             
         } catch (err) {
             console.error("Simulation failed:", err.message);
-            alert("❌ Cannot book slot: " + err.message);
+            alert(" Cannot book slot: " + err.message);
         }
     },
 
@@ -344,7 +363,7 @@ App = {
             const tbody = $("#adminBalances tbody");
             tbody.empty();
 
-            // Support both named and indexed return shapes from web3
+            
             const adminIds = result.adminIdList || result[0] || [];
             const balances = result.balanceList || result[1] || [];
 
@@ -373,7 +392,7 @@ App = {
     }
 
     try {
-        // $("#updateParticipantBtn").prop("disabled", true);
+        
         const  gasEstimate = await App.contract.methods.updateParticipantData(
             participantId,
             trainingInterest,
@@ -390,16 +409,16 @@ App = {
     } catch (err) {
         console.error("Transaction failed:", err);
 
-        // Extract human-readable revert reason if present
+        
         let reason = null;
         if (err.data) {
-            // MetaMask / Ganache / Web3 v1+ format
+            
             const errorData = Object.values(err.data)[0];
             if (errorData && errorData.reason) {
                 reason = errorData.reason;
             }
         } else if (err.message && err.message.includes("revert")) {
-            // Fallback for other revert formats
+            
             const match = err.message.match(/revert (.*)/);
             if (match && match[1]) reason = match[1];
         }

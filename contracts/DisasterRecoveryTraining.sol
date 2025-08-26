@@ -37,7 +37,7 @@ contract DisasterRecoveryTraining {
         bool isBooked;
     }
 
-    // Events for debugging
+    
     event BookingAttempt(address indexed participant, uint256 trainerId, uint256 slotId, string status);
     event BookingSuccess(address indexed participant, uint256 trainerId, uint256 slotId, uint256 participantId);
 
@@ -118,8 +118,8 @@ contract DisasterRecoveryTraining {
         Participant storage p = participants[participantId];
         require(!p.has_completed_training || has_completed_training, "Cannot change completed from true to false");
         
-        // admin only access
-        // require(isAdmin[msg.sender], "Not Authorized");
+        
+        
         p.training_interest = TrainingType(newTrainingInterest);
         p.has_completed_training = has_completed_training;
     }
@@ -131,40 +131,40 @@ contract DisasterRecoveryTraining {
         require(adminIds.length > 0, "No admins available");
         require(slotId < TOTAL_SLOTS_PER_DAY, "Invalid slot ID");
         require(!trainerSlots[trainerId][slotId].isBooked, "Slot is already booked");
-        // require(msg.value == BOOKING_FEE, "Send exact booking fee");
+        
 
-        // Get participant ID from sender address
+        
         uint256 participantId = participantByAddress[msg.sender];
         require(participantId != 0, "Participant not registered");
         
         emit BookingAttempt(msg.sender, trainerId, slotId, "Validation passed");
         
-        // Book the slot
+        
         trainerSlots[trainerId][slotId] = TrainingSlot(slotId, trainerId, participantId, true);
 
-        // Randomly select an admin to receive the payment
+        
         uint256 randomIndex = uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, participantId))) % adminIds.length;
         uint256 selectedAdminId = adminIds[randomIndex];
         (bool success, ) = payable(admins[selectedAdminId].admin_address).call{value: msg.value}("");
         require(success, "Payment failed");
         
         emit BookingSuccess(msg.sender, trainerId, slotId, participantId);
-        // participants[participantId].balance -= BOOKING_FEE;
-        // admins[selectedAdminId].balance += BOOKING_FEE;
+        
+        
         
         return true;
     }
 
-    //     function findParticipantByAddress(address addr) internal view returns (uint256) {
-    //     for (uint256 i = 1; i <= 100; i++) { // adjust max range
-    //         if (participants[i].id != 0 && participants[i].account_address == addr) {
-    //             return participants[i].id;
-    //         }
-    //     }
-    //     return 0;
-    // }
     
-    // Add this function to check if an address is registered as a participant
+    
+    
+    
+    
+    
+    
+    
+    
+    
     function getParticipantIdByAddress(address addr) external view returns (uint256) {
         return participantByAddress[addr];
     }
@@ -181,7 +181,7 @@ contract DisasterRecoveryTraining {
         for (uint256 i = 0; i < totalAdmins; i++) {
             uint256 adminId = adminIds[i];
             adminIdList[i] = adminId;
-            // Return balances in whole ETH units for display, based on actual address balance
+            
             balanceList[i] = admins[adminId].admin_address.balance / 1 ether;
         }
 
@@ -274,18 +274,18 @@ contract DisasterRecoveryTraining {
         return (availableSlots, timeRanges);
     }
 
-// 🔍 Search participants by district → returns total count + sorted IDs + names
+
 function searchParticipantsByDistrict(
     string memory district
 ) external view returns (
-    uint256 totalInDistrict,            // total participants in the district
-    uint256[] memory participantIdsSorted, // sorted list of IDs
-    string[] memory participantNamesSorted // names aligned with IDs
+    uint256 totalInDistrict,            
+    uint256[] memory participantIdsSorted, 
+    string[] memory participantNamesSorted 
 ) {
-    uint256 maxIds = 100; // upper bound, adjust as needed
+    uint256 maxIds = 100; 
     uint256 matchCount = 0;
 
-    // 1️⃣ Count matches in the given district
+    
     for (uint256 i = 1; i <= maxIds; i++) {
         if (
             participants[i].id != 0 &&
@@ -295,7 +295,7 @@ function searchParticipantsByDistrict(
         }
     }
 
-    // 2️⃣ Collect IDs and names of participants in that district
+    
     participantIdsSorted = new uint256[](matchCount);
     participantNamesSorted = new string[](matchCount);
     uint256 idx = 0;
@@ -311,16 +311,16 @@ function searchParticipantsByDistrict(
         }
     }
 
-    // 3️⃣ Sort IDs (ascending) and keep names aligned
+    
     for (uint256 i = 0; i < matchCount; i++) {
         for (uint256 j = i + 1; j < matchCount; j++) {
             if (participantIdsSorted[j] < participantIdsSorted[i]) {
-                // swap IDs
+                
                 uint256 tempId = participantIdsSorted[i];
                 participantIdsSorted[i] = participantIdsSorted[j];
                 participantIdsSorted[j] = tempId;
 
-                // swap names so they stay aligned
+                
                 string memory tempName = participantNamesSorted[i];
                 participantNamesSorted[i] = participantNamesSorted[j];
                 participantNamesSorted[j] = tempName;
@@ -328,7 +328,7 @@ function searchParticipantsByDistrict(
         }
     }
 
-    // 4️⃣ Return total count, sorted IDs, and aligned names
+    
     totalInDistrict = matchCount;
 }
 
