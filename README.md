@@ -136,16 +136,6 @@ The `DisasterRecoveryTraining.sol` contract implements the following core functi
 - **Certification Issuance**: Automated certificate generation upon completion
 - **Record Verification**: Public verification of training credentials
 
-### Contract Structure
-
-```solidity
-contract DisasterRecoveryTraining {
-    // State variables for training management
-    // Structs for trainee and program data
-    // Events for tracking state changes
-    // Functions for CRUD operations
-}
-```
 
 ## Testing
 
